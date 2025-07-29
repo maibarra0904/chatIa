@@ -12,5 +12,10 @@ export default defineConfig({
                 rewrite: (path) => path.replace(/^\/api/, '')
             }
         }
+    },
+    base: '/chatIa/', //Debe coincidir con el nombre del repositorio
+    build: {
+        outDir: 'dist',
+        assetsDir: 'assets',
     }
 });

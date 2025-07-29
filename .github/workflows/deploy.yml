@@ -1,0 +1,85 @@
+name: Deploy React App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+# Configurar permisos para GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Solo permite un deploy concurrente
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clean install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      - name: Build React App
+        run: npm run build
+
+      - name: Debug - List dist contents
+        run: |
+          echo "=== DIST DIRECTORY CONTENTS ==="
+          ls -la ./dist/
+          echo ""
+          echo "=== GENERATED INDEX.HTML CONTENT ==="
+          cat ./dist/index.html
+          echo ""
+          echo "=== VERIFICATION CHECKS ==="
+          if grep -q "/src/main.jsx" ./dist/index.html; then
+            echo "🚨 CRITICAL ERROR: Generated HTML still contains '/src/main.jsx'"
+            echo "This means Vite is NOT processing the HTML template correctly!"
+            exit 1
+          else
+            echo "✅ GOOD: No raw JSX reference found in generated HTML"
+          fi
+          
+          if grep -q "/quizesUnir/assets/" ./dist/index.html; then
+            echo "✅ GOOD: Found correct asset paths with /quizesUnir/assets/"
+          else
+            echo "🚨 ERROR: /quizesUnir/assets/ paths not found in generated HTML"
+            exit 1
+          fi
+          
+          echo ""
+          echo "=== ASSET VERIFICATION ==="
+          echo "Asset files in dist/assets/:"
+          ls -la ./dist/assets/ || echo "No assets directory found"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
