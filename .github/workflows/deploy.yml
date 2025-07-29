@@ -35,8 +35,22 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install
 
+      - name: Verify environment variables
+        run: |
+          echo "Checking environment variables..."
+          if [ -z "$VITE_GROQ_API_KEY" ]; then
+            echo "❌ VITE_GROQ_API_KEY is not set"
+            exit 1
+          else
+            echo "✅ VITE_GROQ_API_KEY is configured"
+          fi
+        env:
+          VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+
       - name: Build React App
         run: npm run build
+        env:
+          VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

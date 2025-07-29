@@ -12,10 +12,12 @@ const Llama3Chat = () => {
 
     // Inicializa Groq con tu API Key del entorno
     // Asegúrate de que VITE_GROQ_API_KEY esté definida en tu archivo .env
-    const groq = new Groq({
-        apiKey: import.meta.env.VITE_GROQ_API_KEY,
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+    
+    const groq = apiKey ? new Groq({
+        apiKey: apiKey,
         dangerouslyAllowBrowser: true, // Necesario para usarlo directamente en el navegador (solo para desarrollo/pruebas)
-    });
+    }) : null;
 
     const handleInputChange = (e) => {
         setInput(e.target.value);
@@ -63,8 +65,22 @@ const Llama3Chat = () => {
             return;
         }
 
-        if (!groq.apiKey) {
-            setError('Error: API Key de Groq no encontrada. Asegúrate de configurarla en tu archivo .env');
+        if (!apiKey || !groq) {
+            const debugInfo = import.meta.env.DEV ? 
+                `\nDebug Info:
+                - API Key presente: ${apiKey ? 'Sí' : 'No'}
+                - Valor: ${apiKey ? '✅ Configurada' : '❌ Vacía/Undefined'}
+                - Entorno: ${import.meta.env.MODE}
+                - Variables VITE disponibles: ${Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')).join(', ') || 'Ninguna'}` 
+                : '';
+                
+            setError(`🔑 API Key de Groq requerida
+            
+Para configurar:
+📍 Desarrollo local: Crea archivo .env con VITE_GROQ_API_KEY=tu_key
+📍 Producción: Configura el secreto VITE_GROQ_API_KEY en GitHub
+📍 Obtén tu key en: https://console.groq.com/
+${debugInfo}`);
             setLoading(false);
             return;
         }
@@ -120,6 +136,13 @@ const Llama3Chat = () => {
                     <div>
                         <h2>🤖 Chatea con IA</h2>
                         <p>Powered by Llama 3</p>
+                        {/* Debug info - solo visible en desarrollo */}
+                        {import.meta.env.DEV && (
+                            <small style={{ color: '#666', fontSize: '0.7rem' }}>
+                                API Key: {apiKey ? '✅ Configurada' : '❌ No encontrada'} | 
+                                Env: {import.meta.env.MODE}
+                            </small>
+                        )}
                     </div>
                     <button 
                         className="clear-button" 
