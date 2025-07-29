@@ -35,36 +35,6 @@ jobs:
 
       - name: Build React App
         run: npm run build
-
-      - name: Debug - List dist contents
-        run: |
-          echo "=== DIST DIRECTORY CONTENTS ==="
-          ls -la ./dist/
-          echo ""
-          echo "=== GENERATED INDEX.HTML CONTENT ==="
-          cat ./dist/index.html
-          echo ""
-          echo "=== VERIFICATION CHECKS ==="
-          if grep -q "/src/main.jsx" ./dist/index.html; then
-            echo "🚨 CRITICAL ERROR: Generated HTML still contains '/src/main.jsx'"
-            echo "This means Vite is NOT processing the HTML template correctly!"
-            exit 1
-          else
-            echo "✅ GOOD: No raw JSX reference found in generated HTML"
-          fi
-          
-          if grep -q "/quizesUnir/assets/" ./dist/index.html; then
-            echo "✅ GOOD: Found correct asset paths with /quizesUnir/assets/"
-          else
-            echo "🚨 ERROR: /quizesUnir/assets/ paths not found in generated HTML"
-            exit 1
-          fi
-          
-          echo ""
-          echo "=== ASSET VERIFICATION ==="
-          echo "Asset files in dist/assets/:"
-          ls -la ./dist/assets/ || echo "No assets directory found"
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
