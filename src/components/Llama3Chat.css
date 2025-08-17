@@ -1,3 +1,25 @@
+/* Espaciado y separación visual para bloques KaTeX */
+.message-content .katex-display {
+    margin: 12px 0 12px 0;
+    padding: 8px 0;
+    background: rgba(240, 240, 255, 0.7);
+    border-radius: 8px;
+    border: 1px solid #e0e7ff;
+}
+.message-content .katex {
+    margin: 0 2px;
+}
+.katex .msup {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    vertical-align: -0.1em !important;
+}
+.message-content span {
+    display: inline;
+    vertical-align: middle;
+}
 .chat-container {
     max-width: 900px;
     margin: 20px auto;
@@ -70,18 +92,18 @@
 }
 
 .chat-content {
-    padding: 20px 30px;
+    padding: 20px 30px 0 30px;
     min-height: 300px;
     max-height: 500px;
     overflow-y: auto;
 }
 
 .chat-history {
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .message-pair {
-    margin-bottom: 25px;
+    margin-bottom: 16px;
     animation: slideIn 0.3s ease-out;
 }
 
@@ -151,6 +173,7 @@
     color: rgba(255, 255, 255, 0.7);
 }
 
+/* Ajuste para evitar desbordes de fórmulas matemáticas */
 .user-message .message-content {
     background: rgba(102, 126, 234, 0.9);
     color: white;
@@ -161,8 +184,10 @@
     white-space: pre-wrap;
     line-height: 1.4;
     box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+    overflow-x: auto;
 }
 
+/* Ajuste para evitar desbordes de fórmulas matemáticas */
 .assistant-message .message-content {
     background: rgba(255, 255, 255, 0.95);
     color: #333;
@@ -175,6 +200,18 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     border-left: 3px solid #667eea;
     transition: all 0.3s ease;
+    overflow-x: auto;
+}
+/* Ajuste específico para KaTeX: scroll horizontal y evitar desbordes */
+.message-content .katex-display {
+    overflow-x: auto;
+    max-width: 100%;
+    display: block;
+    white-space: normal;
+}
+.message-content .katex {
+    word-break: break-word;
+    font-size: 1.1em;
 }
 
 .expand-button-container {

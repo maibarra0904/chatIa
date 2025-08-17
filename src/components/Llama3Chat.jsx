@@ -1,6 +1,71 @@
+
 import { useState, useEffect, useRef } from 'react';
 import Groq from 'groq-sdk';
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
 import './Llama3Chat.css';
+
+import PropTypes from 'prop-types';
+
+
+// Convierte expresiones tipo e^(...) a e^{...} y derivadas comunes a notación LaTeX
+function autoLatexify(str) {
+    if (!str || typeof str !== 'string') return str;
+    let latex = str;
+    // Derivadas de orden 2: d^2y/dt^2 => \frac{d^{2}y}{dt^{2}}
+    latex = latex.replace(/d\^([0-9]+)([a-zA-Z])\/d([a-zA-Z])\^([0-9]+)/g, '\\frac{d^{$1}$2}{d$3^{$4}}');
+    // Derivadas de primer orden: dy/dt => \frac{dy}{dt}
+    latex = latex.replace(/d([a-zA-Z])\/d([a-zA-Z])/g, '\\frac{d$1}{d$2}');
+    // Potencias tipo e^(...) => e^{...}
+    latex = latex.replace(/e\^\(([^)]+)\)/g, 'e^{ $1 }');
+    // Potencias tipo x^(...) => x^{...}
+    latex = latex.replace(/([a-zA-Z0-9])\^\(([^)]+)\)/g, '$1^{ $2 }');
+    // Potencias simples tipo x^2 => x^{2}
+    latex = latex.replace(/([a-zA-Z0-9])\^([0-9]+)/g, '$1^{ $2 }');
+    return latex;
+}
+
+
+
+
+// Renderizado mixto: solo las expresiones matemáticas se muestran como LaTeX, el texto normal es texto plano
+function RenderMathContent({ content }) {
+    if (!content || typeof content !== 'string') return null;
+
+    // Patrón para detectar fragmentos matemáticos (derivadas, potencias, igualdades, fracciones, etc.)
+    // Excluye palabras con tildes y caracteres especiales de español
+    // Solo detecta paréntesis si contienen operadores matemáticos o números junto a variables
+    const mathPattern = /((?:d\^\d+[a-zA-Z]\/d[a-zA-Z]\^\d+)|(?:d[a-zA-Z]\/d[a-zA-Z])|(?:[a-zA-Z0-9]\^\([^)]+\))|(?:[a-zA-Z0-9]\^\d+)|(?:e\^\([^)]+\))|(?:\\frac\{[^}]+\}\{[^}]+\})|(?:[=<>+\-*/^])|(?:\((?=[^)]*[=+\-*/^0-9])[a-zA-Z0-9=+\-*/^ .]+\))|(?:\d+\.?\d*))(?![áéíóúÁÉÍÓÚñÑüÜ])/g;
+
+    let lastIndex = 0;
+    const elements = [];
+    let match;
+    while ((match = mathPattern.exec(content)) !== null) {
+        // Texto antes del fragmento matemático
+        if (match.index > lastIndex) {
+            const plain = content.slice(lastIndex, match.index);
+            if (plain) {
+                elements.push(<span key={lastIndex}>{plain}</span>);
+            }
+        }
+        // Fragmento matemático convertido a LaTeX
+        const latex = autoLatexify(match[0]);
+        elements.push(<InlineMath key={match.index}>{latex}</InlineMath>);
+        lastIndex = match.index + match[0].length;
+    }
+    // Texto restante después del último fragmento matemático
+    if (lastIndex < content.length) {
+        const plain = content.slice(lastIndex);
+        if (plain) {
+            elements.push(<span key={lastIndex}>{plain}</span>);
+        }
+    }
+    return <>{elements}</>;
+}
+
+RenderMathContent.propTypes = {
+    content: PropTypes.string
+};
 
 const Llama3Chat = () => {
     const [input, setInput] = useState('');
@@ -137,12 +202,7 @@ ${debugInfo}`);
                         <h2>🤖 Chatea con IA</h2>
                         <p>Powered by Llama 3</p>
                         {/* Debug info - solo visible en desarrollo */}
-                        {import.meta.env.DEV && (
-                            <small style={{ color: '#666', fontSize: '0.7rem' }}>
-                                API Key: {apiKey ? '✅ Configurada' : '❌ No encontrada'} | 
-                                Env: {import.meta.env.MODE}
-                            </small>
-                        )}
+                        
                     </div>
                     <button 
                         className="clear-button" 
@@ -165,7 +225,7 @@ ${debugInfo}`);
                                     <span className="message-time">{message.timestamp}</span>
                                 </div>
                                 <div className="message-content">
-                                    {message.user}
+                                    <RenderMathContent content={message.user} />
                                 </div>
                             </div>
                             <div className="assistant-message">
@@ -174,7 +234,7 @@ ${debugInfo}`);
                                     <span className="message-time">{message.timestamp}</span>
                                 </div>
                                 <div className="message-content">
-                                    {message.showFullText ? message.fullAssistant : message.assistant}
+                                    <RenderMathContent content={message.showFullText ? message.fullAssistant : message.assistant} />
                                     {message.isTruncated && (
                                         <div className="expand-button-container">
                                             <button 
@@ -188,6 +248,7 @@ ${debugInfo}`);
                                 </div>
                             </div>
                         </div>
+
                     ))}
                 </div>
 
@@ -249,5 +310,7 @@ ${debugInfo}`);
         </div>
     );
 };
+
+
 
 export default Llama3Chat;
